@@ -338,6 +338,9 @@ body {
   </div>
 </div>
 
+<script src="config.template.js"></script>
+<script src="config.js"></script>
+  
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -723,52 +726,23 @@ result.innerHTML = `
             <img src="img/Elf_LoadingAnimation.gif" alt="Loading..." style="width: 100%; height: auto;">
             <div id="timeoutMessage" style="position: absolute; width: 100%; text-align: center; top: 100%; margin-top: 1px;"></div>
         </div>
-        <img 
-            class="gift-image"
-            alt="AI generated image of: ${wishText}"
-            id="generatedImage"
-            width="500"
-            height="500"
-            style="display: none;"
-        >
+        <div id="imageWrapper" style="width: 500px; height: 500px; position: relative;">
+            <img 
+                class="gift-image"
+                alt="AI generated image of: ${wishText}"
+                id="generatedImage"
+                width="500"
+                height="500"
+                style="opacity: 0; transition: opacity 0.5s;"
+            >
+        </div>
     </div>
     <div id="enjoyMessage" style="display: none; margin-top: 10px;">
         <p style="margin-bottom: 30px;"><span style="color: #cc0000;">Merry Christmas ${signature}!<br>We hope you enjoy your gift:</span><br><strong>${wishText}</strong></p>
     </div>
 `;
 
-// Call Bria API to generate image
-fetch('https://engine.prod.bria-api.com/text-to-image/fast/2.3', {
-    method: 'POST',
-    headers: {
-        'api_token': CONFIG.BRIA_API_KEY,
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        prompt: christmasPrompt,
-        num_results: 1,
-        sync: true
-    })
-})
-.then(response => response.json())
-.then(data => {
-    const generatedImage = document.getElementById('generatedImage');
-    generatedImage.src = data.results[0].image_url; // This might need to be adjusted based on Bria's response format
-    generatedImage.style.display = 'block';
-    
-    // Handle image load events
-    generatedImage.onload = function() {
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('enjoyMessage').style.display = 'block';
-        createSparkles(document.getElementById('imageContainer'));
-    };
-})
-.catch(error => {
-    console.error('Error:', error);
-    document.getElementById('loader').style.display = 'none';
-    result.innerHTML = '<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!</p>';
-});
-
+// Initialize timeouts
 const timeoutWarning = setTimeout(() => {
     const timeoutMessage = document.getElementById('timeoutMessage');
     if (timeoutMessage) {
@@ -781,45 +755,60 @@ const timeoutWarning = setTimeout(() => {
     }
 }, 15000);
 
-const timeoutDuration = 60000; // 60 seconds
-const timeout = setTimeout(() => {
-    if (!img.complete) {
-        img.onerror();
-        result.innerHTML = `
-            <p style="color: #cc0000;">
-                Oh no! The elves seem to be taking too long!<br>
-                Please send your letter again.
-            </p>
-        `;
+// Call Bria API
+fetch('https://engine.prod.bria-api.com/text-to-image/fast/2.3', {
+    method: 'POST',
+    headers: {
+        'api_token': CONFIG.BRIA_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+        prompt: christmasPrompt,
+        num_results: 1,
+        sync: true
+    })
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
-}, timeoutDuration);
-
-
-// Handle image load
-const img = result.querySelector('.gift-image');
-img.onload = function() {
-    playSoundEffect('success-sound'); // Add a sound for successful generation
+    return response.json();
+})
+.then(data => {
+    console.log('Bria API Response:', data); // Debug log
+    const generatedImage = document.getElementById('generatedImage');
+    
+    // Check if we have the image URL in the response
+    if (data.results && data.results[0] && data.results[0].image_url) {
+        generatedImage.src = data.results[0].image_url;
+        generatedImage.style.opacity = '1';
+        
+        generatedImage.onload = function() {
+            clearTimeout(timeoutWarning);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('enjoyMessage').style.display = 'block';
+            createSparkles(document.getElementById('imageContainer'));
+        };
+    } else {
+        throw new Error('No image URL in response');
+    }
+})
+.catch(error => {
+    console.error('Error:', error);
     clearTimeout(timeoutWarning);
-    clearTimeout(timeout);
     document.getElementById('loader').style.display = 'none';
-    document.getElementById('enjoyMessage').style.display = 'block';
-    createSparkles(document.getElementById('imageContainer'));
-};
+    result.innerHTML = '<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!</p>';
+});
 
-    // Handle image error
-    img.onerror = () => {
-        document.getElementById('loader').style.display = 'none';
-        result.innerHTML = '<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!</p>';
-    };
-
-    // Scroll to the image container
-    setTimeout(() => {
-        const imageContainer = document.getElementById('imageContainer');
-        imageContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center'
-        });
-    }, 100);
+// Scroll to the image container
+setTimeout(() => {
+    const imageContainer = document.getElementById('imageContainer');
+    imageContainer.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center'
+    });
+}, 100);
 }
 </script>
 
