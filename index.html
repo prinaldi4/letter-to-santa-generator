@@ -747,8 +747,12 @@ fetch('/.netlify/functions/generateImage', {
         prompt: christmasPrompt
     })
 })
-.then(response => response.json())
+.then(response => {
+    console.log('Function response status:', response.status);
+    return response.json();
+})
 .then(data => {
+    console.log('Function response data:', data);
     const generatedImage = document.getElementById('generatedImage');
     if (data.results && data.results[0] && data.results[0].image_url) {
         generatedImage.src = data.results[0].image_url;
@@ -760,13 +764,13 @@ fetch('/.netlify/functions/generateImage', {
             createSparkles(document.getElementById('imageContainer'));
         };
     } else {
-        throw new Error('No image URL in response');
+        throw new Error('No image URL in response: ' + JSON.stringify(data));
     }
 })
 .catch(error => {
-    console.error('Error:', error);
+    console.error('Detailed error:', error);
     document.getElementById('loader').style.display = 'none';
-    result.innerHTML = '<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!</p>';
+    result.innerHTML = `<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!<br><small>${error.message}</small></p>`;
 });
 
 // Scroll to the image container
