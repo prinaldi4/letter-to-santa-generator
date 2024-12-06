@@ -1,8 +1,10 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
-  // Only allow POST requests
+  console.log('Function started');
+  
   if (event.httpMethod !== 'POST') {
+    console.log('Wrong HTTP method');
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method Not Allowed' })
@@ -11,6 +13,8 @@ exports.handler = async function(event, context) {
 
   try {
     const { prompt } = JSON.parse(event.body);
+    console.log('Received prompt:', prompt);
+    console.log('Using API key:', process.env.BRIA_API_KEY ? 'Key exists' : 'No key found');
 
     const response = await fetch('https://engine.prod.bria-api.com/text-to-image/fast/2.3', {
       method: 'POST',
@@ -25,7 +29,9 @@ exports.handler = async function(event, context) {
       })
     });
 
+    console.log('Bria API response status:', response.status);
     const data = await response.json();
+    console.log('Bria API response:', data);
 
     return {
       statusCode: 200,
@@ -36,9 +42,13 @@ exports.handler = async function(event, context) {
       body: JSON.stringify(data)
     };
   } catch (error) {
+    console.error('Detailed error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to generate image' })
+      body: JSON.stringify({ 
+        error: 'Failed to generate image',
+        details: error.message
+      })
     };
   }
 };
