@@ -757,15 +757,13 @@ const timeoutWarning = setTimeout(() => {
 
 // Call Bria API
 
-fetch('https://engine.prod.bria-api.com/text-to-image/fast/2.3', {
+fetch('https://cors-anywhere.herokuapp.com/https://engine.prod.bria-api.com/text-to-image/fast/2.3', {
     method: 'POST',
     headers: {
         'api_token': CONFIG.BRIA_API_KEY,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Origin': 'https://prinaldi4.github.io/letter-to-santa-generator/'  // Replace with your actual GitHub Pages domain
     },
-    mode: 'cors', // Add this line
     body: JSON.stringify({
         prompt: christmasPrompt,
         num_results: 1,
