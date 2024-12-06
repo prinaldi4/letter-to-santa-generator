@@ -762,8 +762,10 @@ fetch('https://cors-anywhere.herokuapp.com/https://engine.prod.bria-api.com/text
     headers: {
         'api_token': CONFIG.BRIA_API_KEY,
         'Content-Type': 'application/json',
-        'Origin': 'https://prinaldi4.github.io/letter-to-santa-generator/'  // Replace with your actual GitHub Pages domain
+        'Origin': 'https://prinaldi4.github.io/letter-to-santa-generator/', // Your actual GitHub Pages URL
+        'Access-Control-Allow-Origin': '*'
     },
+    mode: 'cors',
     body: JSON.stringify({
         prompt: christmasPrompt,
         num_results: 1,
@@ -771,33 +773,14 @@ fetch('https://cors-anywhere.herokuapp.com/https://engine.prod.bria-api.com/text
     })
 })
 .then(response => {
+    console.log('Response:', response);
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
 })
-.then(data => {
-    console.log('Bria API Response:', data); // Debug log
-    const generatedImage = document.getElementById('generatedImage');
-    
-    // Check if we have the image URL in the response
-    if (data.results && data.results[0] && data.results[0].image_url) {
-        generatedImage.src = data.results[0].image_url;
-        generatedImage.style.opacity = '1';
-        
-        generatedImage.onload = function() {
-            clearTimeout(timeoutWarning);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('enjoyMessage').style.display = 'block';
-            createSparkles(document.getElementById('imageContainer'));
-        };
-    } else {
-        throw new Error('No image URL in response');
-    }
-})
 .catch(error => {
     console.error('Error:', error);
-    clearTimeout(timeoutWarning);
     document.getElementById('loader').style.display = 'none';
     result.innerHTML = '<p style="color: #cc0000;">Oops! The elves had trouble creating your gift. Please try again!</p>';
 });
